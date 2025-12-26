@@ -3,7 +3,6 @@
 ## Technical Specification v0.1.0
 
 **Author:** Joel Villarino  
-**Target:** Anthropic Security Fellowship Application  
 **Date:** December 2025  
 **Status:** Draft  
 

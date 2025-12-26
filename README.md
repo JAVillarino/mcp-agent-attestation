@@ -166,88 +166,6 @@ else:
     return result.error_response
 ```
 
-## Development Setup with Zed
-
-### 1. Install Prerequisites
-
-```bash
-# Install uv (fast Python package manager)
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Verify installation
-uv --version
-```
-
-### 2. Clone and Setup
-
-```bash
-# Clone repository
-git clone https://github.com/joelv/mcp-agent-attestation.git
-cd mcp-agent-attestation
-
-# Create environment and install
-uv venv
-source .venv/bin/activate
-uv pip install -e ".[all]"
-```
-
-### 3. Open in Zed
-
-```bash
-# Open project in Zed
-zed .
-```
-
-### 4. Configure Zed for Python
-
-Create or edit `.zed/settings.json` in the project:
-
-```json
-{
-  "languages": {
-    "Python": {
-      "language_servers": ["pyright", "ruff"],
-      "formatter": {
-        "external": {
-          "command": "black",
-          "arguments": ["-"]
-        }
-      }
-    }
-  },
-  "lsp": {
-    "pyright": {
-      "settings": {
-        "python": {
-          "pythonPath": ".venv/bin/python"
-        }
-      }
-    }
-  }
-}
-```
-
-### 5. Recommended Zed Extensions
-
-- **Python** - Language support
-- **Ruff** - Fast linting
-- **Pyright** - Type checking
-
-### 6. Running Tests in Zed
-
-Use Zed's terminal (`Ctrl+`` `) to run:
-
-```bash
-# Run all tests
-pytest
-
-# Run specific test
-pytest tests/test_core.py -v
-
-# Run with coverage
-pytest --cov=attestation
-```
-
 ## Attack Simulation Results
 
 The attack simulation suite demonstrates protection against:
@@ -288,7 +206,7 @@ See [SPEC.md](SPEC.md) for the complete technical specification including:
 
 ## Contributing
 
-This project is part of an application to the Anthropic Security Fellowship. Contributions and feedback are welcome!
+Contributions and feedback are welcome!
 
 ## License
 
@@ -299,6 +217,11 @@ MIT License - see [LICENSE](LICENSE) for details.
 **Joel Villarino**  
 Rice University, Computer Science & Statistics  
 [joelavillarino@gmail.com](mailto:joelavillarino@gmail.com)
+
+## Acknowledgments
+
+Initial implementation developed with assistance from Claude (Anthropic). 
+All code reviewed, tested, and extended by Joel Villarino.
 
 ---
 

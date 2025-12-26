@@ -298,8 +298,8 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 **Joel Villarino**  
 Rice University, Computer Science & Statistics  
-[jvillarino@rice.edu](mailto:jvillarino@rice.edu)
+[joelavillarino@gmail.com](mailto:joelavillarino@gmail.com)
 
 ---
 
-*Built for the Anthropic Security Fellowship application, January 2026*
+

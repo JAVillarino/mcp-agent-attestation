@@ -1,0 +1,103 @@
+[project]
+name = "mcp-agent-attestation"
+version = "0.1.0"
+description = "Cryptographic attestation extension for the Model Context Protocol"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Joel Villarino", email = "jvillarino@rice.edu"}
+]
+requires-python = ">=3.10"
+keywords = ["mcp", "attestation", "security", "llm", "ai", "cryptography"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security :: Cryptography",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+dependencies = [
+    # Core dependencies (required)
+    "pydantic>=2.0",
+    
+    # Crypto dependencies (optional but recommended)
+    "cryptography>=41.0.0",
+    "PyJWT>=2.8.0",
+]
+
+[project.optional-dependencies]
+# Full crypto support
+crypto = [
+    "cryptography>=41.0.0",
+    "PyJWT>=2.8.0",
+]
+
+# MCP SDK integration
+mcp = [
+    "mcp>=1.0.0",
+]
+
+# Development dependencies
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21",
+    "black>=23.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0",
+]
+
+# All dependencies
+all = [
+    "mcp-agent-attestation[crypto,mcp,dev]",
+]
+
+[project.urls]
+Homepage = "https://github.com/joelv/mcp-agent-attestation"
+Documentation = "https://github.com/joelv/mcp-agent-attestation#readme"
+Repository = "https://github.com/joelv/mcp-agent-attestation"
+Issues = "https://github.com/joelv/mcp-agent-attestation/issues"
+
+[project.scripts]
+mcp-attestation-demo = "attestation.core:demo"
+mcp-attestation-attacks = "attestation.attacks:run"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/attestation"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+    "/tests",
+    "/README.md",
+    "/SPEC.md",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.black]
+line-length = 100
+target-version = ["py310"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "C4"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true

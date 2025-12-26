@@ -593,17 +593,4 @@ YXRpb25fdHlwZSI6InByb3ZpZGVyIiwic2FmZXR5X2xldmVsIjoic3RhbmRhcmQifX0.
 <signature>
 ```
 
-## Appendix C: Why TypeScript Matters
-
-TypeScript dominates the MCP ecosystem because:
-
-1. **SDK Origin**: MCP SDK was TypeScript-first
-2. **Ecosystem**: Most MCP servers in production are TypeScript
-3. **Tooling**: Claude Desktop, Cursor, VS Code extensions are JS/TS
-4. **Community**: `@modelcontextprotocol/sdk` has more examples
-
-**For your PoC**: Python is fine. Note in README that the JWT schema is language-agnostic.
-
----
-
 *End of Specification*

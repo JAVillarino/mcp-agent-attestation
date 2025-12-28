@@ -260,6 +260,53 @@ See [SPEC.md](SPEC.md) for the complete technical specification including:
 - Security considerations
 - Enterprise extensions (SPIFFE/IdP)
 
+## CLI Tools
+
+Command-line utilities for token management:
+
+```bash
+# Generate a key pair
+python -m attestation keygen --kid my-key-2025
+
+# Generate an attestation token
+python -m attestation generate \
+  --issuer https://api.anthropic.com \
+  --audience https://my-server.com \
+  --model-version claude-sonnet-4 \
+  --output full
+
+# Inspect a token (without verification)
+python -m attestation inspect <token>
+
+# Run attack simulation suite
+python -m attestation attack
+```
+
+## Observability
+
+Built-in metrics and tracing support:
+
+```python
+from attestation import get_metrics, trace_verification, AttestationEventHandler
+
+# Access metrics
+metrics = get_metrics()
+print(metrics.verification_total)
+print(metrics.to_prometheus())  # Prometheus format
+
+# Trace operations (OpenTelemetry-compatible)
+with trace_verification("https://api.anthropic.com") as span:
+    result = await verifier.verify(token)
+    span.set_attribute("verified", result.verified)
+
+# Custom event handlers
+class MyHandler(AttestationEventHandler):
+    def on_replay_detected(self, issuer, jti):
+        alert_security_team(issuer, jti)
+
+register_event_handler(MyHandler())
+```
+
 ## Roadmap
 
 - [x] Core attestation primitives
@@ -268,6 +315,8 @@ See [SPEC.md](SPEC.md) for the complete technical specification including:
 - [x] MCP SDK integration (AttestingClientSession, AttestingServer)
 - [x] JWKS HTTP fetcher with caching
 - [x] Redis-backed replay cache
+- [x] CLI tools
+- [x] Observability (metrics, tracing, event handlers)
 - [ ] TypeScript implementation
 - [ ] Behavioral fingerprinting (future research)
 

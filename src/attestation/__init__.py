@@ -71,6 +71,20 @@ from .cache import (
     CacheMetrics,
     RedisConfig,
 )
+from .observability import (
+    # Metrics
+    AttestationMetrics,
+    get_metrics,
+    reset_metrics,
+    # Tracing
+    trace_verification,
+    trace_token_creation,
+    trace_jwks_fetch,
+    # Event handlers
+    AttestationEventHandler,
+    register_event_handler,
+    OTEL_AVAILABLE,
+)
 
 # Redis cache (only if redis installed)
 try:
@@ -161,4 +175,15 @@ __all__ = [
     "create_attesting_server",
     "attesting_lifespan",
     "MCP_AVAILABLE",
+
+    # Observability
+    "AttestationMetrics",
+    "get_metrics",
+    "reset_metrics",
+    "trace_verification",
+    "trace_token_creation",
+    "trace_jwks_fetch",
+    "AttestationEventHandler",
+    "register_event_handler",
+    "OTEL_AVAILABLE",
 ]

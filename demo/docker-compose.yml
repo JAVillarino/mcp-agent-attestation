@@ -1,0 +1,57 @@
+# MCP Agent Attestation - Demo Environment
+#
+# This Docker Compose file sets up a complete demo environment:
+# - Redis for distributed replay protection
+# - MCP Server with attestation verification
+# - MCP Client with attestation tokens
+#
+# Usage:
+#   docker-compose up -d
+#   docker-compose logs -f
+#   docker-compose down
+
+services:
+  # Redis for distributed replay cache
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Demo MCP Server with attestation
+  mcp-server:
+    build:
+      context: ..
+      dockerfile: demo/Dockerfile.server
+    ports:
+      - "8080:8080"
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - ATTESTATION_POLICY=required
+      - TRUSTED_ISSUERS=https://api.anthropic.com,https://demo-issuer.local
+      - SERVER_AUDIENCE=https://demo-server.local
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  # Demo MCP Client with attestation
+  mcp-client:
+    build:
+      context: ..
+      dockerfile: demo/Dockerfile.client
+    environment:
+      - SERVER_URL=http://mcp-server:8080
+      - ISSUER_URL=https://demo-issuer.local
+      - TARGET_AUDIENCE=https://demo-server.local
+    depends_on:
+      - mcp-server
+
+volumes:
+  redis-data:

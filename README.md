@@ -317,7 +317,7 @@ register_event_handler(MyHandler())
 - [x] Redis-backed replay cache
 - [x] CLI tools
 - [x] Observability (metrics, tracing, event handlers)
-- [ ] TypeScript implementation
+- [x] TypeScript implementation
 - [ ] Behavioral fingerprinting (future research)
 
 ## Contributing

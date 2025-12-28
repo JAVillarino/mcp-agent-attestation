@@ -57,10 +57,19 @@ from .jwks import (
     # JWKS fetching
     JWKSFetcher,
     HTTPKeyResolver,
+    # Resilience patterns
+    CircuitBreaker,
+    CircuitBreakerConfig,
+    CircuitState,
+    RetryConfig,
+    RetryError,
 )
 from .cache import (
     # Caching
     InMemoryReplayCache,
+    CacheState,
+    CacheMetrics,
+    RedisConfig,
 )
 
 # Redis cache (only if redis installed)
@@ -130,9 +139,19 @@ __all__ = [
     "JWKSFetcher",
     "HTTPKeyResolver",
 
+    # Resilience patterns
+    "CircuitBreaker",
+    "CircuitBreakerConfig",
+    "CircuitState",
+    "RetryConfig",
+    "RetryError",
+
     # Cache
     "InMemoryReplayCache",
     "RedisReplayCache",
+    "CacheState",
+    "CacheMetrics",
+    "RedisConfig",
     "REDIS_AVAILABLE",
 
     # MCP Integration (conditional)

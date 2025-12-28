@@ -10,13 +10,16 @@ License: MIT
 
 from __future__ import annotations
 
+import inspect
 import logging
+import warnings
 from datetime import timedelta
 from typing import Any
 
 from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
 
 try:
+    import mcp
     import mcp.types as types
     from mcp.client.session import (
         ClientSession,
@@ -36,11 +39,17 @@ try:
     from mcp.shared.version import SUPPORTED_PROTOCOL_VERSIONS
 
     MCP_AVAILABLE = True
+    MCP_VERSION = getattr(mcp, "__version__", "unknown")
 except ImportError:
     MCP_AVAILABLE = False
+    MCP_VERSION = None
     # Provide stubs for type hints when MCP not installed
     ClientSession = object  # type: ignore
     types = None  # type: ignore
+
+# Minimum tested MCP SDK version
+MIN_TESTED_MCP_VERSION = "1.0.0"
+MAX_TESTED_MCP_VERSION = "1.9.99"  # Update as we test new versions
 
 from .core import (
     ATTESTATION_CAPABILITY_KEY,
@@ -51,6 +60,80 @@ from .core import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _check_mcp_version_compatibility() -> None:
+    """
+    Check MCP SDK version compatibility and warn if untested.
+
+    This helps catch SDK updates that might change the initialize() method
+    signature or behavior.
+    """
+    if not MCP_AVAILABLE or MCP_VERSION == "unknown":
+        return
+
+    try:
+        from packaging import version
+
+        current = version.parse(MCP_VERSION)
+        min_tested = version.parse(MIN_TESTED_MCP_VERSION)
+        max_tested = version.parse(MAX_TESTED_MCP_VERSION)
+
+        if current < min_tested:
+            warnings.warn(
+                f"MCP SDK version {MCP_VERSION} is older than minimum tested "
+                f"version {MIN_TESTED_MCP_VERSION}. Attestation may not work correctly.",
+                UserWarning,
+                stacklevel=3,
+            )
+        elif current > max_tested:
+            warnings.warn(
+                f"MCP SDK version {MCP_VERSION} is newer than maximum tested "
+                f"version {MAX_TESTED_MCP_VERSION}. Please report any issues.",
+                UserWarning,
+                stacklevel=3,
+            )
+    except ImportError:
+        # packaging not installed, skip version check
+        pass
+    except Exception as e:
+        logger.debug(f"Version check failed: {e}")
+
+
+def _verify_sdk_compatibility() -> bool:
+    """
+    Verify the MCP SDK has the expected interface.
+
+    Returns True if compatible, False if breaking changes detected.
+    """
+    if not MCP_AVAILABLE:
+        return False
+
+    # Check ClientSession has initialize method
+    if not hasattr(ClientSession, "initialize"):
+        logger.error("ClientSession missing initialize method - SDK breaking change")
+        return False
+
+    # Check InitializeRequest exists in types
+    if not hasattr(types, "InitializeRequest"):
+        logger.error("types.InitializeRequest missing - SDK breaking change")
+        return False
+
+    # Check experimental field exists in ClientCapabilities
+    if not hasattr(types.ClientCapabilities, "__init__"):
+        logger.error("ClientCapabilities structure changed - SDK breaking change")
+        return False
+
+    # Verify ClientCapabilities accepts experimental parameter
+    try:
+        sig = inspect.signature(types.ClientCapabilities)
+        if "experimental" not in sig.parameters:
+            logger.error("ClientCapabilities missing 'experimental' parameter")
+            return False
+    except Exception as e:
+        logger.warning(f"Could not verify ClientCapabilities signature: {e}")
+
+    return True
 
 
 class AttestingClientSession(ClientSession):  # type: ignore[misc]
@@ -126,6 +209,16 @@ class AttestingClientSession(ClientSession):  # type: ignore[misc]
         if not MCP_AVAILABLE:
             raise RuntimeError(
                 "MCP SDK not installed. Install with: pip install mcp-agent-attestation[mcp]"
+            )
+
+        # Check SDK version compatibility
+        _check_mcp_version_compatibility()
+
+        # Verify SDK interface hasn't changed
+        if not _verify_sdk_compatibility():
+            raise RuntimeError(
+                f"MCP SDK version {MCP_VERSION} has incompatible changes. "
+                "Please check for mcp-agent-attestation updates or report this issue."
             )
 
         super().__init__(

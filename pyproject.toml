@@ -24,7 +24,8 @@ classifiers = [
 dependencies = [
     # Core dependencies (required)
     "pydantic>=2.0",
-    
+    "httpx>=0.25.0",
+
     # Crypto dependencies (optional but recommended)
     "cryptography>=41.0.0",
     "PyJWT>=2.8.0",
@@ -42,6 +43,11 @@ mcp = [
     "mcp>=1.0.0",
 ]
 
+# Redis for distributed cache
+redis = [
+    "redis>=5.0.0",
+]
+
 # Development dependencies
 dev = [
     "pytest>=7.0",
@@ -53,7 +59,7 @@ dev = [
 
 # All dependencies
 all = [
-    "mcp-agent-attestation[crypto,mcp,dev]",
+    "mcp-agent-attestation[crypto,mcp,redis,dev]",
 ]
 
 [project.urls]

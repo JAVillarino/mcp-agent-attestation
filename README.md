@@ -67,7 +67,11 @@ mcp-agent-attestation/
 │       ├── __init__.py        # Package exports
 │       ├── core.py            # Core attestation primitives
 │       ├── protocol.py        # MCP protocol extension
-│       └── attacks.py         # Attack simulations
+│       ├── attacks.py         # Attack simulations
+│       ├── jwks.py            # JWKS HTTP fetcher
+│       ├── cache.py           # Redis/in-memory replay cache
+│       ├── mcp_client.py      # MCP SDK client integration
+│       └── mcp_server.py      # MCP SDK server integration
 └── tests/
     └── ...
 ```
@@ -134,7 +138,70 @@ else:
     print(f"Verification failed: {result.error}")
 ```
 
-### MCP Protocol Integration
+### MCP SDK Integration
+
+The library provides direct integration with the MCP Python SDK:
+
+#### Client Side: AttestingClientSession
+
+```python
+from mcp.client.stdio import stdio_client
+from attestation import AttestationProvider, AgentIdentity, KeyPair
+from attestation.mcp_client import AttestingClientSession
+
+# Setup attestation
+keypair = KeyPair.generate("my-key")
+provider = AttestationProvider(issuer="https://api.anthropic.com", keypair=keypair)
+identity = AgentIdentity(model_family="claude-4", model_version="claude-sonnet-4", provider="anthropic")
+
+# Connect with attestation
+async with stdio_client(server_params) as (read, write):
+    session = AttestingClientSession(
+        read_stream=read,
+        write_stream=write,
+        attestation_provider=provider,
+        agent_identity=identity,
+        target_audience="https://my-mcp-server.com",
+    )
+    result = await session.initialize()  # Token injected automatically
+
+    # Check attestation was verified
+    if session.attestation_verified:
+        print(f"Verified with trust level: {session.attestation_status['trust_level']}")
+```
+
+#### Server Side: AttestingServer
+
+```python
+from mcp.server.lowlevel.server import Server
+from attestation import AttestationVerifier, InMemoryKeyResolver, VerificationPolicy
+from attestation.mcp_server import AttestingServer, create_attesting_server
+
+# Setup verifier
+key_resolver = InMemoryKeyResolver()
+key_resolver.add_keypair("https://api.anthropic.com", trusted_keypair)
+verifier = AttestationVerifier(
+    trusted_issuers=["https://api.anthropic.com"],
+    key_resolver=key_resolver,
+    policy=VerificationPolicy.REQUIRED,
+)
+
+# Create attesting server
+attesting_server = create_attesting_server("my-server", verifier, version="1.0.0")
+
+# Register handlers (same as normal MCP server)
+@attesting_server.list_tools()
+async def list_tools():
+    return [...]
+
+# Protect specific tools
+@attesting_server.call_tool()
+@attesting_server.require_attestation(trust_level=TrustLevel.PROVIDER)
+async def call_tool(name, arguments):
+    return [...]
+```
+
+### Lower-Level Protocol Integration
 
 ```python
 from attestation import (
@@ -198,9 +265,9 @@ See [SPEC.md](SPEC.md) for the complete technical specification including:
 - [x] Core attestation primitives
 - [x] MCP protocol extension
 - [x] Attack simulation suite
-- [ ] Real MCP SDK integration
-- [ ] JWKS HTTP fetcher
-- [ ] Redis-backed replay cache
+- [x] MCP SDK integration (AttestingClientSession, AttestingServer)
+- [x] JWKS HTTP fetcher with caching
+- [x] Redis-backed replay cache
 - [ ] TypeScript implementation
 - [ ] Behavioral fingerprinting (future research)
 

@@ -188,18 +188,38 @@ class TestRedisReplayCache:
         mock_redis.expire.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_check_and_add_not_connected_raises(self):
-        """Test that operations raise when not connected."""
+    async def test_check_and_add_not_connected_uses_fallback(self):
+        """Test that operations fall back to in-memory when not connected."""
         from attestation.cache import REDIS_AVAILABLE
 
         if not REDIS_AVAILABLE:
             pytest.skip("Redis not installed")
 
-        from attestation.cache import RedisReplayCache
+        from attestation.cache import RedisReplayCache, RedisConfig, CacheState
 
+        # With fallback enabled (default), should succeed using in-memory
         cache = RedisReplayCache()
+        result = await cache.check_and_add("jti", 12345)
 
-        with pytest.raises(RuntimeError, match="Not connected"):
+        assert result is True  # New JTI accepted
+        assert cache.is_using_fallback is True
+        assert cache.state == CacheState.DEGRADED
+
+    @pytest.mark.asyncio
+    async def test_check_and_add_no_fallback_raises(self):
+        """Test that operations raise when fallback disabled."""
+        from attestation.cache import REDIS_AVAILABLE
+
+        if not REDIS_AVAILABLE:
+            pytest.skip("Redis not installed")
+
+        from attestation.cache import RedisReplayCache, RedisConfig
+
+        # With fallback disabled, should raise
+        config = RedisConfig(fallback_enabled=False)
+        cache = RedisReplayCache(config=config)
+
+        with pytest.raises(RuntimeError, match="Redis unavailable"):
             await cache.check_and_add("jti", 12345)
 
     @pytest.mark.asyncio
@@ -210,10 +230,11 @@ class TestRedisReplayCache:
         if not REDIS_AVAILABLE:
             pytest.skip("Redis not installed")
 
-        from attestation.cache import RedisReplayCache
+        from attestation.cache import RedisReplayCache, CacheState
 
         cache = RedisReplayCache()
         cache._client = mock_redis
+        cache._state = CacheState.HEALTHY
         mock_redis.exists.return_value = 1
 
         result = await cache.exists("jti-123")
@@ -229,10 +250,11 @@ class TestRedisReplayCache:
         if not REDIS_AVAILABLE:
             pytest.skip("Redis not installed")
 
-        from attestation.cache import RedisReplayCache
+        from attestation.cache import RedisReplayCache, CacheState
 
         cache = RedisReplayCache()
         cache._client = mock_redis
+        cache._state = CacheState.HEALTHY
 
         # Simulate finding some keys
         mock_redis.scan.side_effect = [
@@ -252,10 +274,11 @@ class TestRedisReplayCache:
         if not REDIS_AVAILABLE:
             pytest.skip("Redis not installed")
 
-        from attestation.cache import RedisReplayCache
+        from attestation.cache import RedisReplayCache, CacheState
 
         cache = RedisReplayCache()
         cache._client = mock_redis
+        cache._state = CacheState.HEALTHY
 
         mock_redis.scan.side_effect = [
             (1, [b"key1", b"key2"]),
@@ -289,10 +312,16 @@ class TestRedisReplayCache:
         if not REDIS_AVAILABLE:
             pytest.skip("Redis not installed")
 
-        from attestation.cache import RedisReplayCache
+        from attestation.cache import RedisReplayCache, RedisConfig
 
+        # Test with legacy parameter
         cache = RedisReplayCache(key_prefix="custom:prefix:")
-        assert cache._key_prefix == "custom:prefix:"
+        assert cache._config.key_prefix == "custom:prefix:"
+
+        # Test with new config object
+        config = RedisConfig(key_prefix="config:prefix:")
+        cache2 = RedisReplayCache(config=config)
+        assert cache2._config.key_prefix == "config:prefix:"
 
 
 if __name__ == "__main__":

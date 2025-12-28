@@ -57,6 +57,14 @@ dev = [
     "mypy>=1.0",
 ]
 
+# Test dependencies (includes all optional deps for full test coverage)
+test = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21",
+    "mcp>=1.0.0",
+    "redis>=5.0.0",
+]
+
 # All dependencies
 all = [
     "mcp-agent-attestation[crypto,mcp,redis,dev]",
@@ -69,6 +77,7 @@ Repository = "https://github.com/joelv/mcp-agent-attestation"
 Issues = "https://github.com/joelv/mcp-agent-attestation/issues"
 
 [project.scripts]
+mcp-attestation = "attestation.cli:main"
 mcp-attestation-demo = "attestation.core:demo"
 mcp-attestation-attacks = "attestation.attacks:run"
 
